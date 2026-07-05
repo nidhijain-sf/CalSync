@@ -78,6 +78,20 @@ Copy the resulting binary into `dist/mac/` or `dist/windows/` to update the dist
 
 ---
 
+## Documentation
+
+| Doc | Description |
+|---|---|
+| [Overview](./docs/overview.md) | What CalSync is and why it exists |
+| [Installation](./docs/installation.md) | Detailed install steps for Mac and Windows |
+| [Setup](./docs/setup.md) | Connecting Salesforce and Google Calendar |
+| [How the Sync Works](./docs/how-sync-works.md) | What gets synced, when, and how |
+| [Architecture](./docs/architecture.md) | System design and data flow diagrams |
+| [Developer Guide](./docs/developer-guide.md) | Building, running, and releasing |
+| [Troubleshooting](./docs/troubleshooting.md) | Common issues and fixes |
+
+---
+
 ## Need Help?
 
 Use the **Feedback** page inside the app to reach the ACE team on Slack.

@@ -27,3 +27,4 @@ CalSync/SyncApp
 CalSync/SyncApp.exe
 
 .DS_Store
+.vscode/

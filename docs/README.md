@@ -10,3 +10,4 @@
 | [Developer Guide](./developer-guide.md) | Developers | Building, running, releasing |
 | [Troubleshooting](./troubleshooting.md) | Everyone | Common issues and how to fix them |
 | [Scripts & Automation](./scripts-and-automation.md) | Developers | Build scripts, GitHub Actions, labels, versioning |
+| [Claude Code Commands](./claude-commands.md) | Developers | `/release`, `/test`, `/push`, `/diff`, `/summary`, `/compare`, `/log` |

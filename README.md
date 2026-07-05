@@ -1,5 +1,12 @@
 # CalSync by ACE
 
+[![Build Check](https://github.com/nidhijain-sf/CalSync/actions/workflows/build-check.yml/badge.svg)](https://github.com/nidhijain-sf/CalSync/actions/workflows/build-check.yml)
+[![Latest Release](https://img.shields.io/github/v/release/nidhijain-sf/CalSync?label=download&logo=github)](https://github.com/nidhijain-sf/CalSync/releases/latest)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/nidhijain-sf/CalSync?logo=go)](go.mod)
+[![Platform](https://img.shields.io/badge/platform-mac%20%7C%20windows-lightgrey?logo=apple)](https://github.com/nidhijain-sf/CalSync/releases/latest)
+[![License](https://img.shields.io/github/license/nidhijain-sf/CalSync)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-read-blue?logo=readme)](./docs/README.md)
+
 **Salesforce to Google Calendar Sync**
 
 Syncs your Salesforce calendar events (Billable Utilization) to your Google Calendar automatically every day at 9am. If your laptop was off at 9am, it will catch up automatically the next time you open it.

@@ -31,6 +31,19 @@ These are generated at runtime — never commit them:
 - `google_token.json`, `last_sync.json`, `sync_map.json`, `color.json` — runtime state
 - `calsync.log`, `com.ace.calsync.plist`, `SyncApp`, `SyncApp.exe`
 
+## Slash Commands
+
+| Command | Purpose |
+|---|---|
+| `/branch 1.2.3` | Create a new branch (release, feature, fix, hotfix, docs, chore) |
+| `/release 1.2.3` | Build, tag, and push a new release |
+| `/test` | Verify app is running and healthy |
+| `/push "message"` | Safe commit and push (blocks credentials) |
+| `/diff` | Human-readable diff summary |
+| `/summary` | Change summary as release notes / PR / Slack |
+| `/compare v0.0.3 v0.0.4` | Side-by-side version comparison |
+| `/log` | Summarise calsync.log in plain English |
+
 ## Docs
 
 Full documentation is in [`docs/`](./docs/README.md).

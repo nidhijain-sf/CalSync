@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#032D60"/>
+      <stop offset="40%" style="stop-color:#0a4a8a"/>
+      <stop offset="100%" style="stop-color:#00A1E0"/>
+    </linearGradient>
+    <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7dd3fc"/>
+      <stop offset="100%" style="stop-color:#00A1E0"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00A1E0"/>
+      <stop offset="100%" style="stop-color:#7dd3fc"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softglow">
+      <feGaussianBlur stdDeviation="12" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="banner-clip">
+      <rect width="1200" height="360" rx="18"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="360" rx="18" fill="url(#bgGrad)"/>
+
+  <!-- Subtle grid pattern -->
+  <g clip-path="url(#banner-clip)" opacity="0.04">
+    <line x1="0" y1="60" x2="1200" y2="60" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="120" x2="1200" y2="120" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="180" x2="1200" y2="180" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="240" x2="1200" y2="240" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="300" x2="1200" y2="300" stroke="white" stroke-width="1"/>
+    <line x1="150" y1="0" x2="150" y2="360" stroke="white" stroke-width="1"/>
+    <line x1="300" y1="0" x2="300" y2="360" stroke="white" stroke-width="1"/>
+    <line x1="450" y1="0" x2="450" y2="360" stroke="white" stroke-width="1"/>
+    <line x1="600" y1="0" x2="600" y2="360" stroke="white" stroke-width="1"/>
+    <line x1="750" y1="0" x2="750" y2="360" stroke="white" stroke-width="1"/>
+    <line x1="900" y1="0" x2="900" y2="360" stroke="white" stroke-width="1"/>
+    <line x1="1050" y1="0" x2="1050" y2="360" stroke="white" stroke-width="1"/>
+  </g>
+
+  <!-- Glow orb left -->
+  <circle cx="160" cy="180" r="140" fill="#00A1E0" opacity="0.07" filter="url(#softglow)"/>
+
+  <!-- Glow orb right -->
+  <circle cx="1050" cy="180" r="160" fill="#0070d2" opacity="0.08" filter="url(#softglow)"/>
+
+  <!-- Neural network dots left side -->
+  <circle cx="60" cy="80" r="3.5" fill="#00A1E0" opacity="0.5"/>
+  <circle cx="110" cy="50" r="2.5" fill="#7dd3fc" opacity="0.4"/>
+  <circle cx="55" cy="290" r="3" fill="#00A1E0" opacity="0.45"/>
+  <circle cx="115" cy="310" r="2.5" fill="#7dd3fc" opacity="0.35"/>
+  <circle cx="90" cy="180" r="2" fill="#7dd3fc" opacity="0.3"/>
+  <line x1="60" y1="80" x2="110" y2="50" stroke="#00A1E0" stroke-width="1" opacity="0.25"/>
+  <line x1="60" y1="80" x2="90" y2="180" stroke="#00A1E0" stroke-width="1" opacity="0.2"/>
+  <line x1="90" y1="180" x2="55" y2="290" stroke="#00A1E0" stroke-width="1" opacity="0.2"/>
+  <line x1="55" y1="290" x2="115" y2="310" stroke="#00A1E0" stroke-width="1" opacity="0.25"/>
+
+  <!-- Neural network dots right side -->
+  <circle cx="1140" cy="75" r="3.5" fill="#00A1E0" opacity="0.5"/>
+  <circle cx="1090" cy="50" r="2.5" fill="#7dd3fc" opacity="0.4"/>
+  <circle cx="1145" cy="285" r="3" fill="#00A1E0" opacity="0.45"/>
+  <circle cx="1085" cy="310" r="2.5" fill="#7dd3fc" opacity="0.35"/>
+  <circle cx="1110" cy="175" r="2" fill="#7dd3fc" opacity="0.3"/>
+  <line x1="1140" y1="75" x2="1090" y2="50" stroke="#00A1E0" stroke-width="1" opacity="0.25"/>
+  <line x1="1140" y1="75" x2="1110" y2="175" stroke="#00A1E0" stroke-width="1" opacity="0.2"/>
+  <line x1="1110" y1="175" x2="1145" y2="285" stroke="#00A1E0" stroke-width="1" opacity="0.2"/>
+  <line x1="1145" y1="285" x2="1085" y2="310" stroke="#00A1E0" stroke-width="1" opacity="0.25"/>
+
+  <!-- Logo mark (left of text) -->
+  <!-- Hexagon -->
+  <polygon points="200,130 228,146 228,178 200,194 172,178 172,146"
+           fill="none" stroke="url(#accentGrad)" stroke-width="2" opacity="0.7"/>
+  <!-- Lightning bolt -->
+  <path d="M206,138 L192,168 L203,168 L194,192 L216,160 L204,160 Z"
+        fill="url(#sparkGrad)" filter="url(#glow)"/>
+
+  <!-- Divider line -->
+  <line x1="250" y1="120" x2="250" y2="240" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+
+  <!-- Main title: CalSync -->
+  <text x="278" y="158"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+        font-size="72"
+        font-weight="800"
+        fill="white"
+        letter-spacing="-1">CalSync</text>
+
+  <!-- "by ACE" badge -->
+  <rect x="280" y="172" width="110" height="28" rx="14" fill="rgba(0,161,224,0.25)" stroke="#00A1E0" stroke-width="1" opacity="0.9"/>
+  <text x="335" y="191"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+        font-size="13"
+        font-weight="700"
+        fill="#7dd3fc"
+        text-anchor="middle"
+        letter-spacing="1.5">by ACE</text>
+
+  <!-- Tagline -->
+  <text x="278" y="230"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+        font-size="18"
+        font-weight="400"
+        fill="rgba(255,255,255,0.7)"
+        letter-spacing="0.3">Sync your Salesforce calendar to Google — automatically.</text>
+
+  <!-- Bottom accent line -->
+  <rect x="278" y="248" width="200" height="3" rx="2" fill="url(#accentGrad)" opacity="0.8"/>
+
+  <!-- Right side: feature pills -->
+  <g transform="translate(780, 108)">
+    <!-- Pill 1 -->
+    <rect x="0" y="0" width="180" height="38" rx="19" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+    <text x="90" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+          font-size="13.5" font-weight="600" fill="white" text-anchor="middle">⚡  Real-time Sync</text>
+
+    <!-- Pill 2 -->
+    <rect x="0" y="52" width="180" height="38" rx="19" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+    <text x="90" y="76" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+          font-size="13.5" font-weight="600" fill="white" text-anchor="middle">🔒  Secure &amp; Private</text>
+
+    <!-- Pill 3 -->
+    <rect x="0" y="104" width="180" height="38" rx="19" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+    <text x="90" y="128" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+          font-size="13.5" font-weight="600" fill="white" text-anchor="middle">💻  No Installation</text>
+
+    <!-- Pill 4 -->
+    <rect x="0" y="156" width="180" height="38" rx="19" fill="rgba(0,161,224,0.2)" stroke="#00A1E0" stroke-width="1.5"/>
+    <text x="90" y="180" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+          font-size="13.5" font-weight="700" fill="#7dd3fc" text-anchor="middle">🌍  Mac &amp; Windows</text>
+  </g>
+
+  <!-- Bottom bar -->
+  <rect x="0" y="326" width="1200" height="34" rx="0" fill="rgba(0,0,0,0.2)" clip-path="url(#banner-clip)"/>
+  <rect x="0" y="343" width="1200" height="17" rx="0" fill="rgba(0,0,0,0.1)" clip-path="url(#banner-clip)"/>
+  <text x="600" y="348"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+        font-size="11"
+        font-weight="500"
+        fill="rgba(255,255,255,0.5)"
+        text-anchor="middle"
+        letter-spacing="2">AI CENTRE OF EXCELLENCE  ·  SALESFORCE</text>
+</svg>

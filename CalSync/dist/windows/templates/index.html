@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CalSync v3 by ACE</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sf-blue: #0070d2;
+      --sf-dark: #032D60;
+      --sf-light: #e8f4fd;
+      --accent: #00A1E0;
+      --green: #27ae60;
+      --red: #c0392b;
+      --gray: #f4f6f9;
+      --text: #1a1a2e;
+      --muted: #6b7280;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--gray);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    nav {
+      background: var(--sf-dark);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-brand span { color: white; font-size: 1.1rem; font-weight: 700; letter-spacing: .3px; }
+    .nav-version {
+      background: rgba(255,255,255,.18);
+      color: rgba(255,255,255,.9);
+      font-size: .68rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      letter-spacing: .4px;
+    }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a {
+      color: rgba(255,255,255,.75);
+      text-decoration: none;
+      font-size: .9rem;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: all .2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: white; background: rgba(255,255,255,.12); }
+
+    .hero {
+      background: linear-gradient(135deg, var(--sf-dark) 0%, #0a4a8a 60%, var(--accent) 100%);
+      color: white;
+      padding: 64px 32px 72px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      color: white;
+      font-size: .78rem;
+      font-weight: 600;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    .hero h1 { font-size: 2.6rem; font-weight: 800; margin-bottom: 16px; line-height: 1.2; }
+    .hero h1 span { color: #7dd3fc; }
+    .hero p { font-size: 1.1rem; color: rgba(255,255,255,.8); max-width: 520px; margin: 0 auto 32px; line-height: 1.6; }
+    .hero-icons { display: flex; align-items: center; justify-content: center; gap: 16px; font-size: 2.2rem; }
+    .hero-arrow { font-size: 1.4rem; color: rgba(255,255,255,.6); animation: pulse 2s infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: .4; transform: scaleX(1); }
+      50% { opacity: 1; transform: scaleX(1.2); }
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .container { max-width: 820px; margin: 0 auto; padding: 40px 20px 60px; }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 28px 32px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
+      margin-bottom: 20px;
+    }
+    .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .card-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .card-icon.sf { background: #e8f4fd; }
+    .card-icon.google { background: #fce8e8; }
+    .card-icon.sync { background: #e8f5e9; }
+    .card-icon.color { background: #f3e8ff; }
+    .card-header h2 { font-size: 1.05rem; font-weight: 700; flex: 1; }
+
+    .badge { font-size: .72rem; padding: 3px 10px; border-radius: 20px; font-weight: 700; letter-spacing: .3px; }
+    .badge.connected { background: #d4edda; color: #155724; }
+    .badge.disconnected { background: #fde8e8; color: #7f1d1d; }
+
+    label {
+      display: block;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 5px;
+      margin-top: 16px;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: .95rem;
+      color: var(--text);
+      transition: border-color .2s;
+      background: white;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--sf-blue); box-shadow: 0 0 0 3px rgba(0,112,210,.1); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; border-radius: 8px; font-size: .9rem; font-weight: 600;
+      cursor: pointer; border: none; text-decoration: none; transition: all .2s;
+    }
+    .btn-primary { background: var(--sf-blue); color: white; }
+    .btn-primary:hover { background: #0058a3; transform: translateY(-1px); }
+    .btn-google { background: white; color: #444; border: 1.5px solid #e5e7eb; }
+    .btn-google:hover { background: #f9fafb; border-color: #d1d5db; }
+    .btn-danger { background: var(--red); color: white; font-size: .82rem; padding: 7px 14px; }
+    .btn-danger:hover { background: #a93226; }
+    .btn-sync {
+      background: linear-gradient(135deg, #27ae60, #1e8449);
+      color: white; font-size: 1rem; padding: 14px 32px;
+      width: 100%; justify-content: center; border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(39,174,96,.3);
+    }
+    .btn-sync:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(39,174,96,.4); }
+    .btn-sync:disabled { background: #9ca3af; box-shadow: none; transform: none; cursor: not-allowed; }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; align-items: center; }
+    .error { color: var(--red); font-size: .85rem; margin-top: 10px; padding: 10px 14px; background: #fef2f2; border-radius: 8px; border-left: 3px solid var(--red); }
+
+    /* ---- COLOR PICKER ---- */
+    .color-picker-label {
+      font-size: .88rem;
+      color: var(--muted);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    .color-swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .color-swatch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: transform .15s;
+    }
+    .color-swatch:hover { transform: translateY(-2px); }
+    .swatch-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .color-swatch.selected .swatch-circle {
+      border-color: var(--sf-dark);
+      box-shadow: 0 0 0 2px white, 0 0 0 4px var(--sf-dark);
+    }
+    .swatch-label {
+      font-size: .68rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-align: center;
+      max-width: 52px;
+      line-height: 1.2;
+    }
+    .color-swatch.selected .swatch-label { color: var(--sf-dark); }
+    .color-preview {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--gray);
+      border-radius: 8px;
+      font-size: .85rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .color-preview-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .color-saved-msg {
+      font-size: .78rem;
+      color: #15803d;
+      margin-left: auto;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .color-saved-msg.show { opacity: 1; }
+
+    /* ---- SYNC RESULT ---- */
+    #sync-section { text-align: center; }
+    .sync-result {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border-radius: 12px; padding: 20px; margin-top: 16px;
+      text-align: left; border: 1px solid #bbf7d0;
+    }
+    .sync-result .count { font-size: 1.6rem; font-weight: 800; color: #15803d; }
+    .sync-meta { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+    .event-list { margin-top: 14px; max-height: 240px; overflow-y: auto; border-radius: 8px; background: white; border: 1px solid #e5e7eb; }
+    .event-item { padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: .83rem; display: flex; gap: 8px; align-items: center; }
+    .event-item:last-child { border-bottom: none; }
+    .tag { font-size: .7rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; white-space: nowrap; }
+    .tag.created { background: #d4edda; color: #155724; }
+    .tag.updated { background: #dbeafe; color: #1e40af; }
+    .tag.deleted { background: #fef3c7; color: #92400e; }
+    .tag.recreated { background: #ede9fe; color: #5b21b6; }
+    .tag.error { background: #fee2e2; color: #991b1b; }
+    .sync-time { font-size: .75rem; color: var(--muted); margin-top: 10px; }
+
+    /* ---- ABOUT ---- */
+    .about-hero {
+      background: linear-gradient(135deg, var(--sf-dark), #0a4a8a);
+      border-radius: 14px; padding: 40px 36px; color: white;
+      margin-bottom: 20px; text-align: center;
+    }
+    .about-hero h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; }
+    .about-hero p { color: rgba(255,255,255,.8); font-size: 1rem; line-height: 1.6; max-width: 480px; margin: 0 auto; }
+    .mission-card { background: white; border-radius: 14px; padding: 28px 32px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 20px; }
+    .mission-card h3 { font-size: 1rem; font-weight: 700; color: var(--sf-blue); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .mission-card p { color: var(--muted); line-height: 1.7; font-size: .95rem; }
+    .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    .feature-item { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); border-top: 3px solid var(--sf-blue); }
+    .feature-item .fi { font-size: 1.5rem; margin-bottom: 10px; }
+    .feature-item h4 { font-size: .9rem; font-weight: 700; margin-bottom: 6px; }
+    .feature-item p { font-size: .82rem; color: var(--muted); line-height: 1.5; }
+
+    /* ---- FEEDBACK ---- */
+    .feedback-intro { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-radius: 14px; padding: 28px 32px; margin-bottom: 20px; border: 1px solid #bfdbfe; text-align: center; }
+    .feedback-intro h2 { font-size: 1.3rem; font-weight: 700; color: var(--sf-dark); margin-bottom: 8px; }
+    .feedback-intro p { color: var(--muted); font-size: .92rem; }
+    textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: .95rem; font-family: inherit; resize: vertical; min-height: 120px; transition: border-color .2s; }
+    textarea:focus { outline: none; border-color: var(--sf-blue); box-shadow: 0 0 0 3px rgba(0,112,210,.1); }
+    .rating { display: flex; gap: 8px; margin-top: 8px; }
+    .star { font-size: 1.6rem; cursor: pointer; color: #d1d5db; transition: color .15s; }
+    .star.active, .star:hover { color: #f59e0b; }
+    .feedback-success { text-align: center; padding: 24px; background: #f0fdf4; border-radius: 12px; border: 1px solid #bbf7d0; display: none; }
+    .feedback-success .check { font-size: 2.5rem; margin-bottom: 10px; }
+    .feedback-success h3 { color: #15803d; font-size: 1.1rem; }
+    .feedback-success p { color: var(--muted); font-size: .88rem; margin-top: 6px; }
+
+    footer { background: var(--sf-dark); color: rgba(255,255,255,.5); text-align: center; padding: 20px; font-size: .82rem; }
+    footer span { color: rgba(255,255,255,.8); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-brand" href="#" onclick="showPage('sync')">
+    <img src="/logo" alt="ACE" style="width:34px;height:34px;border-radius:8px"/>
+    <span>CalSync by ACE</span>
+    <span class="nav-version">v3</span>
+  </a>
+  <div class="nav-links">
+    <a href="#" class="active" id="nav-sync" onclick="showPage('sync')">Sync</a>
+    <a href="#" id="nav-about" onclick="showPage('about')">About</a>
+    <a href="#" id="nav-feedback" onclick="showPage('feedback')">Feedback</a>
+  </div>
+</nav>
+
+<!-- ===================== SYNC PAGE ===================== -->
+<div id="page-sync" class="page active">
+
+  <div class="hero">
+    <div class="hero-badge">AI Centre of Excellence</div>
+    <h1>Your Calendars,<br/><span>Always in Sync</span></h1>
+    <p>Connect your Salesforce and Google accounts below. CalSync will automatically bring your Salesforce events into Google Calendar.</p>
+    <div class="hero-icons">
+      <span>☁️</span>
+      <span class="hero-arrow">→</span>
+      <span>📅</span>
+      <span class="hero-arrow">→</span>
+      <span>🗓️</span>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- Salesforce Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon sf">☁️</div>
+        <h2>Salesforce</h2>
+        {{if .SFConnected}}
+          <span class="badge connected">✓ Connected</span>
+        {{else}}
+          <span class="badge disconnected">Not connected</span>
+        {{end}}
+      </div>
+      {{if .SFConnected}}
+        <p style="color:var(--muted);font-size:.9rem">Your Salesforce account is connected and ready to sync.</p>
+        <div class="btn-row">
+          <a href="/disconnect/salesforce" class="btn btn-danger">Disconnect</a>
+        </div>
+      {{else}}
+        <form method="POST" action="/connect/salesforce">
+          <label>Email / Username</label>
+          <input type="email" name="sf_username" placeholder="you@tandc.org" required/>
+          <label>Password</label>
+          <input type="password" name="sf_password" required/>
+          <label>Security Token <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#9ca3af">(leave blank if not required)</span></label>
+          <input type="text" name="sf_token" placeholder="Optional"/>
+          <label>Environment</label>
+          <select name="sf_domain">
+            <option value="login">Production</option>
+            <option value="test">Sandbox</option>
+          </select>
+          {{if .SFError}}<p class="error">{{.SFError}}</p>{{end}}
+          <div class="btn-row">
+            <button type="submit" class="btn btn-primary">Connect Salesforce</button>
+          </div>
+        </form>
+      {{end}}
+    </div>
+
+    <!-- Google Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon google">🔵</div>
+        <h2>Google Calendar</h2>
+        {{if .GoogleConnected}}
+          <span class="badge connected">✓ Connected</span>
+        {{else}}
+          <span class="badge disconnected">Not connected</span>
+        {{end}}
+      </div>
+      {{if .GoogleConnected}}
+        <p style="color:var(--muted);font-size:.9rem">Your Google account is connected and ready to receive events.</p>
+        <div class="btn-row">
+          <a href="/disconnect/google" class="btn btn-danger">Disconnect</a>
+        </div>
+      {{else}}
+        {{if .GoogleError}}<p class="error">{{.GoogleError}}</p>{{end}}
+        <p style="color:var(--muted);font-size:.9rem;margin-bottom:18px">Sign in with Google to allow CalSync to add events to your calendar.</p>
+        <a href="/connect/google" class="btn btn-google">
+          <img src="https://www.google.com/favicon.ico" width="18" height="18" alt="G"/>
+          Sign in with Google
+        </a>
+      {{end}}
+    </div>
+
+    <!-- Event Color Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon color">🎨</div>
+        <h2>Event Color</h2>
+      </div>
+      <p class="color-picker-label">Choose the color for your Salesforce events in Google Calendar. These match Google Calendar's built-in colors exactly. Default is <strong>Blueberry</strong>.</p>
+
+      <div class="color-swatches" id="color-swatches">
+        {{range .Colors}}
+        <div class="color-swatch {{if .Selected}}selected{{end}}" id="swatch-{{.ID}}" onclick="selectColor('{{.ID}}', '{{.Hex}}', '{{.Name}}')">
+          <div class="swatch-circle" style="background:{{.Hex}}"></div>
+          <span class="swatch-label">{{.Name}}</span>
+        </div>
+        {{end}}
+      </div>
+
+      <div class="color-preview" id="color-preview">
+        <div class="color-preview-dot" id="preview-dot" style="background:{{.SelectedHex}}"></div>
+        <span id="preview-label">Selected: <strong id="preview-name">{{range .Colors}}{{if .Selected}}{{.Name}}{{end}}{{end}}</strong></span>
+        <span class="color-saved-msg" id="color-saved-msg">✓ Saved</span>
+      </div>
+    </div>
+
+    <!-- Sync Card -->
+    <div class="card" id="sync-section">
+      <div class="card-header">
+        <div class="card-icon sync">🔄</div>
+        <h2>Sync Now</h2>
+      </div>
+      {{if and .SFConnected .GoogleConnected}}
+        <p style="color:var(--muted);font-size:.9rem;margin-bottom:20px">Both accounts are connected. Your Salesforce events will be synced to Google Calendar in your chosen color.</p>
+        <button class="btn btn-sync" id="sync-btn" onclick="runSync()">🔄 &nbsp;Sync Now</button>
+        <div style="margin-top:16px;font-size:.85rem;color:var(--muted);display:flex;gap:24px;flex-wrap:wrap">
+          <span>🕐 Last synced: <strong id="last-sync-label">{{.LastSync}}</strong></span>
+          <span>⏭ Next sync: <strong>{{.NextSync}}</strong></span>
+        </div>
+        <div id="sync-status"></div>
+        <script>
+          function runSync() {
+            const btn = document.getElementById("sync-btn");
+            const status = document.getElementById("sync-status");
+            btn.disabled = true;
+            btn.textContent = "Syncing…";
+            status.innerHTML = '<p style="color:var(--muted);margin-top:14px;font-size:.9rem">⏳ Fetching events from Salesforce…</p>';
+            fetch("/sync", { method: "POST" })
+              .then(r => r.json())
+              .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = "🔄 &nbsp;Sync Now";
+                if (data.error) {
+                  status.innerHTML = '<div style="margin-top:14px" class="error">Error: ' + data.error + '</div>';
+                  return;
+                }
+                let html = '<div class="sync-result">';
+                html += '<div class="count">' + data.synced + ' event' + (data.synced !== 1 ? 's' : '') + ' synced</div>';
+                html += '<div class="sync-meta">' + (data.skipped||0) + ' skipped &nbsp;·&nbsp; ' + (data.deleted||0) + ' deleted &nbsp;·&nbsp; ' + (data.errors||0) + ' error' + (data.errors !== 1 ? 's' : '') + '</div>';
+                if (data.details && data.details.length) {
+                  html += '<div class="event-list">';
+                  data.details.forEach(e => {
+                    let tc = 'created';
+                    if (e.status.startsWith('error')) tc = 'error';
+                    else if (e.status === 'updated') tc = 'updated';
+                    else if (e.status === 'deleted') tc = 'deleted';
+                    else if (e.status === 'recreated') tc = 'recreated';
+                    html += '<div class="event-item"><span class="tag ' + tc + '">' + e.status + '</span><span>' + e.subject + '</span></div>';
+                  });
+                  html += '</div>';
+                }
+                const now = new Date();
+                const formatted = now.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short', year:'numeric'}) + ' at ' + now.toLocaleTimeString('en-GB', {hour:'numeric', minute:'2-digit', hour12:true}).toUpperCase();
+                html += '<div class="sync-time">Last synced: ' + now.toLocaleTimeString() + '</div>';
+                html += '</div>';
+                status.innerHTML = html;
+                const lastSyncEl = document.getElementById("last-sync-label");
+                if (lastSyncEl) lastSyncEl.textContent = formatted;
+              })
+              .catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = "🔄 &nbsp;Sync Now";
+                status.innerHTML = '<div style="margin-top:14px" class="error">Network error: ' + err + '</div>';
+              });
+          }
+        </script>
+      {{else}}
+        <p style="color:#9ca3af;font-size:.9rem">Connect both accounts above to start syncing your calendar.</p>
+      {{end}}
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== ABOUT PAGE ===================== -->
+<div id="page-about" class="page">
+  <div class="container">
+    <div class="about-hero">
+      <img src="/logo" alt="ACE Logo" style="width:120px;height:120px;margin:0 auto 16px;display:block"/>
+      <h2>AI Centre of Excellence</h2>
+      <p>We empower our global community of instructors by integrating AI into their daily workflows — from training delivery to course ramp-ups.</p>
+    </div>
+    <div class="mission-card">
+      <h3>🎯 Our Mission</h3>
+      <p>The AI Centre of Excellence (ACE) is dedicated to transforming how Salesforce instructors work. We build intelligent tools that remove friction from day-to-day tasks, so our instructors can focus on what matters most — delivering world-class training experiences.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="fi">🔄</div>
+        <h4>Real-time Sync</h4>
+        <p>Salesforce calendar events flow directly into Google Calendar — always up to date.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi">🎨</div>
+        <h4>Custom Colors</h4>
+        <p>Choose any Google Calendar color for your synced events so they stand out at a glance.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi">🔒</div>
+        <h4>Secure & Private</h4>
+        <p>Your credentials never leave your machine. No data stored in the cloud.</p>
+      </div>
+      <div class="feature-item">
+        <div class="fi">⚡</div>
+        <h4>Zero Setup</h4>
+        <p>No installation required. Double-click and go — works on any Mac.</p>
+      </div>
+    </div>
+    <div class="mission-card">
+      <h3>📬 Contact Us</h3>
+      <p>Have questions or ideas? Reach out to the ACE team at <a href="mailto:nidhi.jain@salesforce.com" style="color:var(--sf-blue);font-weight:600">nidhi.jain@salesforce.com</a>. We'd love to hear from you.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== FEEDBACK PAGE ===================== -->
+<div id="page-feedback" class="page">
+  <div class="container">
+    <div class="feedback-intro">
+      <h2>💬 Share Your Feedback</h2>
+      <p>Help us improve CalSync. Your feedback goes directly to the ACE team via Slack.</p>
+    </div>
+    <div class="card" style="text-align:center;padding:40px 32px">
+      <div style="font-size:3rem;margin-bottom:16px">💬</div>
+      <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:10px;color:var(--sf-dark)">Got feedback or a feature request?</h3>
+      <p style="color:var(--muted);font-size:.95rem;max-width:440px;margin:0 auto 24px;line-height:1.6">Use our Slack workflow to send feedback directly to the ACE team. Follow the steps below:</p>
+
+      <div style="background:var(--gray);border-radius:12px;padding:24px 28px;text-align:left;max-width:480px;margin:0 auto 24px">
+        <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px">
+          <span style="background:var(--sf-blue);color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0">1</span>
+          <p style="font-size:.9rem;color:var(--text);margin:0;line-height:1.5">Click <strong>Copy Link</strong> below to copy the workflow link.</p>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px">
+          <span style="background:var(--sf-blue);color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0">2</span>
+          <p style="font-size:.9rem;color:var(--text);margin:0;line-height:1.5">Open <strong>Slack</strong> and paste the link into any message box.</p>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <span style="background:var(--sf-blue);color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0">3</span>
+          <p style="font-size:.9rem;color:var(--text);margin:0;line-height:1.5">Press <strong>Enter</strong> and click the link to open the feedback form.</p>
+        </div>
+      </div>
+
+      <button onclick="copyFeedbackLink()" class="btn btn-primary" style="font-size:1rem;padding:13px 32px;" id="copy-btn">
+        📋 &nbsp;Copy Workflow Link
+      </button>
+      <p style="color:#9ca3af;font-size:.78rem;margin-top:14px">Paste the link inside Slack to open the feedback form.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  Built with ❤️ by the <span>AI Centre of Excellence (ACE)</span> · Salesforce
+</footer>
+
+<script>
+  // ---- Color picker ----
+  function selectColor(id, hex, name) {
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+    document.getElementById('swatch-' + id).classList.add('selected');
+    document.getElementById('preview-dot').style.background = hex;
+    document.getElementById('preview-name').textContent = name;
+
+    fetch('/set-color', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'color_id=' + encodeURIComponent(id)
+    }).then(() => {
+      const msg = document.getElementById('color-saved-msg');
+      msg.classList.add('show');
+      setTimeout(() => msg.classList.remove('show'), 2000);
+    });
+  }
+
+
+  // ---- Page navigation ----
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+    window.scrollTo(0, 0);
+    return false;
+  }
+
+  // ---- Feedback link copy ----
+  function copyFeedbackLink() {
+    navigator.clipboard.writeText("https://slack.com/shortcuts/Ft0AVC084MJR/7efba55903afd6a40e0e4933f1f0996f").then(() => {
+      const btn = document.getElementById("copy-btn");
+      btn.innerHTML = "✅ &nbsp;Link Copied!";
+      btn.style.background = "#15803d";
+      setTimeout(() => {
+        btn.innerHTML = "📋 &nbsp;Copy Workflow Link";
+        btn.style.background = "";
+      }, 2500);
+    });
+  }
+
+</script>
+
+</body>
+</html>

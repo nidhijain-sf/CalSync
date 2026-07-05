@@ -1,0 +1,12 @@
+CalSync/google_credentials.json
+CalSync/sf_credentials.json
+CalSync/dist/mac/google_credentials.json
+CalSync/dist/windows/google_credentials.json
+CalSync/google_token.json
+CalSync/last_sync.json
+CalSync/sync_map.json
+CalSync/calsync.log
+CalSync/com.ace.calsync.plist
+CalSync/SyncApp
+CalSync/SyncApp.exe
+.DS_Store

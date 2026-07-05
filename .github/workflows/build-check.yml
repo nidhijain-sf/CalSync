@@ -1,0 +1,34 @@
+name: Build Check
+
+on:
+  push:
+    branches: [ main, 'release/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build Mac binary
+        run: GOOS=darwin GOARCH=amd64 go build -o /dev/null .
+
+      - name: Build Windows binary
+        run: GOOS=windows GOARCH=amd64 go build -o /dev/null .
+
+      - name: Verify no credentials committed
+        run: |
+          if git grep -r "GOCSPX-\|client_secret" -- '*.go' '*.json' '*.md' 2>/dev/null; then
+            echo "ERROR: Possible credentials found in committed files"
+            exit 1
+          fi

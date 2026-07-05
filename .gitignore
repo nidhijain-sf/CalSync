@@ -1,12 +1,29 @@
+# Credentials (all locations)
+google_credentials.json
+sf_credentials.json
 CalSync/google_credentials.json
 CalSync/sf_credentials.json
 CalSync/dist/mac/google_credentials.json
 CalSync/dist/windows/google_credentials.json
+dist/mac/google_credentials.json
+dist/windows/google_credentials.json
+
+# Runtime-generated files
+google_token.json
+last_sync.json
+sync_map.json
+calsync.log
+com.ace.calsync.plist
 CalSync/google_token.json
 CalSync/last_sync.json
 CalSync/sync_map.json
 CalSync/calsync.log
 CalSync/com.ace.calsync.plist
+
+# Binaries
+SyncApp
+SyncApp.exe
 CalSync/SyncApp
 CalSync/SyncApp.exe
+
 .DS_Store

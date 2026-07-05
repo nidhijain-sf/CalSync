@@ -9,3 +9,4 @@
 | [Architecture](./architecture.md) | Technical | System design, data flow, auth flows |
 | [Developer Guide](./developer-guide.md) | Developers | Building, running, releasing |
 | [Troubleshooting](./troubleshooting.md) | Everyone | Common issues and how to fix them |
+| [Scripts & Automation](./scripts-and-automation.md) | Developers | Build scripts, GitHub Actions, labels, versioning |

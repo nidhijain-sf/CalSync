@@ -1,0 +1,58 @@
+# GitHub Labels
+# Apply via: gh label create --repo nidhijain-sf/CalSync (or import via github-labeler action)
+
+- name: bug
+  color: "d73a4a"
+  description: Something isn't working
+
+- name: enhancement
+  color: "a2eeef"
+  description: New feature or improvement
+
+- name: documentation
+  color: "0075ca"
+  description: Improvements or additions to docs
+
+- name: needs-triage
+  color: "e4e669"
+  description: Needs investigation or prioritisation
+
+- name: good first issue
+  color: "7057ff"
+  description: Good for newcomers
+
+- name: help wanted
+  color: "008672"
+  description: Extra attention needed
+
+- name: wontfix
+  color: "ffffff"
+  description: This will not be worked on
+
+- name: duplicate
+  color: "cfd3d7"
+  description: This issue or PR already exists
+
+- name: release
+  color: "0e8a16"
+  description: Release related
+
+- name: mac
+  color: "1d76db"
+  description: Mac-specific issue
+
+- name: windows
+  color: "0052cc"
+  description: Windows-specific issue
+
+- name: salesforce
+  color: "00a1e0"
+  description: Salesforce integration
+
+- name: google-calendar
+  color: "fbbc04"
+  description: Google Calendar integration
+
+- name: security
+  color: "e11d48"
+  description: Security related

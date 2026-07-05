@@ -11,6 +11,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 go build -o SyncApp .                         # Mac/Linux
 GOOS=windows GOARCH=amd64 go build -o SyncApp.exe .  # Windows
+./scripts/build.sh                            # Build both + sync templates to dist/
+./scripts/run-local.sh                        # Run locally at localhost:5001
+./scripts/release.sh 1.2.3                    # Tag and prepare a release
 ```
 
 ## Key Files

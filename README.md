@@ -89,6 +89,7 @@ Copy the resulting binary into `dist/mac/` or `dist/windows/` to update the dist
 | [Architecture](./docs/architecture.md) | System design and data flow diagrams |
 | [Developer Guide](./docs/developer-guide.md) | Building, running, and releasing |
 | [Troubleshooting](./docs/troubleshooting.md) | Common issues and fixes |
+| [Scripts & Automation](./docs/scripts-and-automation.md) | Build scripts, releases, GitHub Actions, labels |
 
 ---
 

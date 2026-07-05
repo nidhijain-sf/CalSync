@@ -35,6 +35,7 @@ These are generated at runtime — never commit them:
 
 | Command | Purpose |
 |---|---|
+| `/branch 1.2.3` | Create a new branch (release, feature, fix, hotfix, docs, chore) |
 | `/release 1.2.3` | Build, tag, and push a new release |
 | `/test` | Verify app is running and healthy |
 | `/push "message"` | Safe commit and push (blocks credentials) |

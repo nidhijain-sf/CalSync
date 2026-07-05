@@ -6,6 +6,7 @@ CalSync ships with project-level slash commands for Claude Code. These are avail
 
 | Command | Usage | What it does |
 |---|---|---|
+| `/branch` | `/branch 1.2.3` or `/branch feature/my-feature` | Create a new branch following naming conventions |
 | `/release` | `/release 1.2.3` | Build binaries, commit, tag, and push a new release |
 | `/test` | `/test` | Check the app is running, accounts connected, and log is healthy |
 | `/push` | `/push "my message"` | Stage, commit, and push changes safely (blocks credentials) |
@@ -17,6 +18,14 @@ CalSync ships with project-level slash commands for Claude Code. These are avail
 ---
 
 ## Examples
+
+### Create a new branch
+```
+/branch 0.0.5
+```
+Creates `release/0.0.5`. Or try `/branch feature/add-event-filter` — Claude will follow the naming convention and push the branch with upstream tracking set.
+
+---
 
 ### Cut a new release
 ```

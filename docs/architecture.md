@@ -4,42 +4,27 @@
 
 CalSync is a single Go binary (`SyncApp`) that runs as a background process on the user's machine. It has no cloud backend — everything runs locally.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        User's Laptop                            │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │                    SyncApp (Go binary)                   │   │
-│  │                                                          │   │
-│  │   ┌─────────────┐    ┌──────────────┐   ┌────────────┐  │   │
-│  │   │  Web Server │    │  Scheduler   │   │  Sync      │  │   │
-│  │   │  :5001      │    │  (9am daily) │   │  Engine    │  │   │
-│  │   └──────┬──────┘    └──────┬───────┘   └─────┬──────┘  │   │
-│  │          │                  │                 │          │   │
-│  │          └──────────────────┴─────────────────┘          │   │
-│  │                             │                            │   │
-│  │              ┌──────────────▼──────────────┐             │   │
-│  │              │        Local Storage        │             │   │
-│  │              │  sf_credentials.json        │             │   │
-│  │              │  google_token.json           │             │   │
-│  │              │  sync_map.json               │             │   │
-│  │              │  last_sync.json              │             │   │
-│  │              │  color.json                  │             │   │
-│  │              └─────────────────────────────┘             │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│                                                                  │
-│  ┌────────────────┐                                             │
-│  │  Browser       │ ←── http://localhost:5001                   │
-│  │  (Dashboard)   │                                             │
-│  └────────────────┘                                             │
-└──────────────────────────────────────────────────────────────────┘
-                    │                          │
-                    ▼                          ▼
-        ┌───────────────────┐     ┌────────────────────────┐
-        │   Salesforce API  │     │  Google Calendar API   │
-        │  (SOAP login +    │     │  (OAuth2 + REST)       │
-        │   REST query)     │     │                        │
-        └───────────────────┘     └────────────────────────┘
+```mermaid
+graph TB
+    subgraph Laptop["User's Laptop"]
+        subgraph App["SyncApp (Go binary)"]
+            WS["Web Server\n:5001"]
+            SCH["Scheduler\n(9am daily)"]
+            SE["Sync Engine"]
+            LS[("Local Storage\nsf_credentials.json\ngoogle_token.json\nsync_map.json\nlast_sync.json\ncolor.json")]
+        end
+        BR["Browser\nhttp://localhost:5001"]
+    end
+
+    SF["Salesforce API\n(SOAP login + REST query)"]
+    GC["Google Calendar API\n(OAuth2 + REST)"]
+
+    BR <-->|"Dashboard UI"| WS
+    WS --> SE
+    SCH --> SE
+    SE <--> LS
+    SE -->|"Query events"| SF
+    SE -->|"Create / Update / Delete"| GC
 ```
 
 ---
@@ -91,19 +76,106 @@ All state is stored as JSON files in the same directory as the binary:
 
 ### Salesforce
 
-CalSync uses the **Salesforce SOAP Login API** (`/services/Soap/u/59.0`). After a successful login, it stores the session ID and instance URL in memory and saves the credentials to disk for automatic re-login after reboot.
+```mermaid
+sequenceDiagram
+    participant U as User (Browser)
+    participant A as SyncApp
+    participant SF as Salesforce SOAP API
 
-If the session expires (401 response), CalSync automatically re-authenticates using the saved credentials and retries the failed request.
+    U->>A: Enter username / password / token
+    A->>SF: POST /services/Soap/u/59.0 (login)
+    SF-->>A: sessionId + instanceURL
+    A->>A: Save credentials to sf_credentials.json
+    A-->>U: Connected ✓
 
-### Google Calendar
+    Note over A,SF: On session expiry (401)
+    A->>SF: Auto re-login with saved credentials
+    SF-->>A: New sessionId
+    A->>SF: Retry original request
+```
 
-CalSync uses **OAuth 2.0 with PKCE** (Proof Key for Code Exchange) for security. The flow:
+### Google Calendar (OAuth 2.0 + PKCE)
 
-1. App generates a random state + PKCE code verifier
-2. User is redirected to Google's consent screen
-3. Google redirects back to `http://localhost:5001/connect/google/callback`
-4. App exchanges the authorization code for access + refresh tokens
-5. Tokens are saved to disk; the refresh token is used automatically when the access token expires
+```mermaid
+sequenceDiagram
+    participant U as User (Browser)
+    participant A as SyncApp
+    participant G as Google OAuth
+
+    U->>A: Click "Connect Google Calendar"
+    A->>A: Generate state + PKCE verifier
+    A-->>U: Redirect to Google consent screen
+    U->>G: Log in and approve permissions
+    G-->>U: Redirect to localhost:5001/connect/google/callback
+    U->>A: Authorization code + state
+    A->>G: Exchange code for tokens (with PKCE verifier)
+    G-->>A: Access token + Refresh token
+    A->>A: Save tokens to google_token.json
+    A-->>U: Connected ✓
+
+    Note over A,G: On token expiry
+    A->>G: Auto-refresh using refresh token
+    G-->>A: New access token
+```
+
+---
+
+## Data Flow — Startup & Scheduled Sync
+
+```mermaid
+flowchart TD
+    A([User logs in to laptop]) --> B[SyncApp starts automatically]
+    B --> C[Load saved credentials from disk]
+    C --> D{Salesforce creds saved?}
+    D -->|Yes| E[Re-authenticate with Salesforce]
+    D -->|No| F[Wait for user to connect]
+    E --> G{Google token saved?}
+    F --> G
+    G -->|Yes| H[Restore Google token]
+    G -->|No| F
+    H --> I[Start scheduler loop\nevery 5 min]
+    I --> J{Past 9am AND\nnot synced today?}
+    J -->|No| I
+    J -->|Yes| K[Wait 5 min for network]
+    K --> L{Both accounts\nconnected?}
+    L -->|No| M[Retry in 5 min]
+    M --> L
+    L -->|Yes| N[Run Sync Engine]
+    N --> O[Save last_sync.json]
+    O --> P([Desktop notification sent])
+    P --> I
+```
+
+---
+
+## Sync Engine Logic
+
+```mermaid
+flowchart TD
+    A([Start Sync]) --> B[Query Salesforce\nBillable Utilization events\nfrom today onwards]
+    B --> C[Load sync_map.json\nSF ID → Google event ID]
+    C --> D[For each Salesforce event]
+
+    D --> E{Already in\nsync map?}
+
+    E -->|No| F[Create new\nGoogle Calendar event]
+    F --> G[Add to sync map]
+
+    E -->|Yes| H[Fetch existing\nGoogle Calendar event]
+    H --> I{Event changed?\ntitle / time /\nlocation / color}
+    I -->|Yes| J[Update Google\nCalendar event]
+    I -->|No| K[Skip — no change]
+
+    D --> L[For each previously synced event\nno longer in Salesforce]
+    L --> M[Delete from\nGoogle Calendar]
+    M --> N[Remove from sync map]
+
+    G --> O[Save sync_map.json]
+    J --> O
+    K --> O
+    N --> O
+    O --> P([Sync complete])
+```
 
 ---
 
@@ -121,45 +193,3 @@ The installer places a `launcher.bat` in:
 `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\`
 
 This runs the app every time the user logs into Windows.
-
----
-
-## Data Flow Diagram
-
-```
-User logs in to laptop
-        │
-        ▼
-SyncApp starts automatically
-        │
-        ├─► Load saved credentials from disk
-        ├─► Re-authenticate with Salesforce (if credentials saved)
-        ├─► Restore Google token (if saved)
-        └─► Start scheduler loop (checks every 5 min)
-                │
-                ▼ (when past 9am and not synced today)
-        ┌───────────────────────────────────────┐
-        │            Sync Engine                │
-        │                                       │
-        │  1. Query Salesforce for events       │
-        │     (Billable Utilization, today+)    │
-        │                 │                     │
-        │  2. Load sync_map.json                │
-        │                 │                     │
-        │  3. For each SF event:                │
-        │     ├─ New? → Create in Google Cal    │
-        │     ├─ Changed? → Update in Google Cal│
-        │     └─ Unchanged? → Skip              │
-        │                 │                     │
-        │  4. For each previously synced event  │
-        │     no longer in SF:                  │
-        │     └─ Delete from Google Cal         │
-        │                 │                     │
-        │  5. Save updated sync_map.json        │
-        │  6. Save last_sync.json               │
-        └───────────────────────────────────────┘
-                │
-                ▼
-        Desktop notification sent
-        ("X events synced, Y deleted, Z errors")
-```

@@ -1,13 +1,14 @@
 # CalSync by ACE
+
 **Salesforce to Google Calendar Sync**
 
-Syncs your Salesforce calendar events (Billable Utilization) to your Google Calendar automatically every day at 9am.
-
-If your laptop was off at 9am, it will catch up automatically the next time you open it.
+Syncs your Salesforce calendar events (Billable Utilization) to your Google Calendar automatically every day at 9am. If your laptop was off at 9am, it will catch up automatically the next time you open it.
 
 ---
 
-## Mac
+## Installation
+
+### Mac
 
 > **First time only:** macOS will block the installer. Follow these exact steps.
 
@@ -27,9 +28,7 @@ If your laptop was off at 9am, it will catch up automatically the next time you 
 
 To uninstall: double-click `Uninstall.command` and follow the same Privacy & Security steps if blocked.
 
----
-
-## Windows
+### Windows
 
 1. Extract the zip and open the `windows` folder
 2. Double-click `Install.bat`
@@ -40,6 +39,42 @@ To uninstall: double-click `Uninstall.command` and follow the same Privacy & Sec
 6. Click **Sync Now** to run your first sync
 
 To uninstall: double-click `Uninstall.bat`.
+
+---
+
+## How It Works
+
+- Runs a local web server on **port 5001** — visit `http://localhost:5001` to manage the app
+- Written in Go (`main.go`) — handles Salesforce + Google OAuth, sync scheduling, and sync logic
+- **Mac**: persists via `~/Library/LaunchAgents/com.ace.calsync.plist` (auto-starts on login)
+- **Windows**: persists via a startup entry in `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\`
+- Logs written to `calsync.log` in the app's working directory
+
+---
+
+## Repository Structure
+
+```
+main.go               App entry point — HTTP server, OAuth flows, sync logic
+go.mod / go.sum       Go module dependencies
+templates/            Web UI served by the app
+Install.command       Mac installer (strips quarantine, codesigns, installs LaunchAgent)
+Uninstall.command     Mac uninstaller
+dist/
+  mac/                Distributable Mac package (installer + templates)
+  windows/            Distributable Windows package (installer + templates)
+```
+
+---
+
+## Building
+
+```bash
+go build -o SyncApp .                    # Mac/Linux
+GOOS=windows go build -o SyncApp.exe .   # Windows cross-compile
+```
+
+Copy the resulting binary into `dist/mac/` or `dist/windows/` to update the distributable package.
 
 ---
 

@@ -25,22 +25,25 @@ jobs:
       - name: Build Windows binary
         run: GOOS=windows GOARCH=amd64 go build -o dist/windows/SyncApp.exe .
 
-      - name: Create Mac zip (excludes credentials)
+      - name: Inject Google credentials
+        run: |
+          echo '${{ secrets.GOOGLE_CREDENTIALS }}' > dist/mac/google_credentials.json
+          echo '${{ secrets.GOOGLE_CREDENTIALS }}' > dist/windows/google_credentials.json
+
+      - name: Create Mac zip
         run: |
           cp "docs/HOW TO USE.txt" dist/mac/
           cd dist/mac
           zip -r ../../CalSync-mac-${{ github.ref_name }}.zip . \
-            --exclude "*/google_credentials.json" \
             --exclude "*/sf_credentials.json" \
             --exclude "*/google_token.json" \
             --exclude "*/calsync.log"
 
-      - name: Create Windows zip (excludes credentials)
+      - name: Create Windows zip
         run: |
           cp "docs/HOW TO USE.txt" dist/windows/
           cd dist/windows
           zip -r ../../CalSync-windows-${{ github.ref_name }}.zip . \
-            --exclude "*/google_credentials.json" \
             --exclude "*/sf_credentials.json" \
             --exclude "*/google_token.json" \
             --exclude "*/calsync.log"

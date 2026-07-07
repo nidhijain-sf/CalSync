@@ -1,7 +1,7 @@
 # CalSync by ACE
 
 [![Build Check](https://github.com/nidhijain-sf/CalSync/actions/workflows/build-check.yml/badge.svg)](https://github.com/nidhijain-sf/CalSync/actions/workflows/build-check.yml)
-[![Latest Release](https://img.shields.io/badge/release-v0.0.5-brightgreen?logo=github)](https://github.com/nidhijain-sf/CalSync/releases/latest)
+[![Latest Release](https://img.shields.io/badge/release-v0.0.6-brightgreen?logo=github)](https://github.com/nidhijain-sf/CalSync/releases/latest)
 [![Go Version](https://img.shields.io/badge/go-1.25-blue?logo=go)](go.mod)
 [![Platform](https://img.shields.io/badge/platform-mac%20%7C%20windows-lightgrey?logo=apple)](https://github.com/nidhijain-sf/CalSync/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)

@@ -596,12 +596,14 @@ func runScheduledSync(label string) {
 			if creds := loadSFCredentials(); creds != nil && session.SFInstanceURL == "" {
 				if err := sfLogin(creds.Username, creds.Password, creds.Token, creds.Domain); err != nil {
 					log.Printf("[scheduler] SF re-login failed: %v — retrying in 5 minutes", err)
+					notify("CalSync — Action Required", "Salesforce login failed. Open http://localhost:5001 to reconnect.")
 				} else {
 					log.Println("[scheduler] SF re-login succeeded")
 					continue
 				}
 			} else {
 				log.Println("[scheduler] accounts not connected, retrying in 5 minutes")
+				notify("CalSync — Action Required", "Accounts not connected. Open http://localhost:5001 to connect.")
 			}
 			time.Sleep(5 * time.Minute)
 			continue

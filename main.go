@@ -591,7 +591,18 @@ func runScheduledSync(label string) {
 		connected := session.SFInstanceURL != "" && session.GoogleToken != nil
 		sessionMu.RUnlock()
 		if !connected {
-			log.Println("[scheduler] accounts not connected, retrying in 5 minutes")
+			// SF session may be missing because startup login failed (e.g. no network at boot).
+			// Retry sfLogin with saved credentials before waiting again.
+			if creds := loadSFCredentials(); creds != nil && session.SFInstanceURL == "" {
+				if err := sfLogin(creds.Username, creds.Password, creds.Token, creds.Domain); err != nil {
+					log.Printf("[scheduler] SF re-login failed: %v — retrying in 5 minutes", err)
+				} else {
+					log.Println("[scheduler] SF re-login succeeded")
+					continue
+				}
+			} else {
+				log.Println("[scheduler] accounts not connected, retrying in 5 minutes")
+			}
 			time.Sleep(5 * time.Minute)
 			continue
 		}
@@ -1120,7 +1131,9 @@ func handleLogo(w http.ResponseWriter, r *http.Request) {
 func main() {
 	logFile, err := os.OpenFile(filepath.Join(appDir(), "calsync.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err == nil {
-		log.SetOutput(io.MultiWriter(os.Stdout, logFile))
+		// Write only to the log file — launchd already captures stdout, so
+		// MultiWriter(os.Stdout, logFile) would produce duplicate entries.
+		log.SetOutput(logFile)
 	}
 
 	log.Printf("[startup] app directory: %s", appDir())

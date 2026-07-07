@@ -28,6 +28,10 @@ bash scripts/build.sh
 echo "Staging dist binaries..."
 git add dist/mac/SyncApp dist/windows/SyncApp.exe dist/mac/templates dist/windows/templates
 
+echo "Updating README badge..."
+sed -i '' "s|release-v[0-9]*\.[0-9]*\.[0-9]*-brightgreen|release-$TAG-brightgreen|" README.md
+git add README.md
+
 echo "Committing..."
 git commit -m "Release $TAG"
 

@@ -10,7 +10,8 @@ Create a new CalSync release.
    ```
    git add dist/mac/SyncApp dist/windows/SyncApp.exe dist/mac/templates dist/windows/templates
    ```
-6. Commit with message: `Release v<version>`
+6. Update the README badge version: replace `release-v*.*.*-brightgreen` with `release-v<version>-brightgreen` in `README.md`, then `git add README.md`
+7. Commit with message: `Release v<version>`
 7. Create git tag: `v<version>`
 8. Show the user a summary of what was built and ask for confirmation before pushing
 9. On confirmation, push: `git push origin <current-branch> && git push origin v<version>`

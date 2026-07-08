@@ -19,15 +19,20 @@ IMPORTANT — First time only, macOS will block the installer. Follow these exac
 1. Extract the zip and move the "CalSync-Share" folder to your Applications folder
 2. Open the "mac" folder
 3. Double-click "Install.command"
-   -> macOS will show a warning and block it. That is expected.
+   -> macOS will show a warning and block it. That is expected. Select "OK".
 4. Open System Settings -> Privacy & Security
 5. Scroll down — you will see:
    "Install.command was blocked"
-6. Click "Open Anyway"
+6. Select "Open Anyway" -> Select "Open Anyway"
 7. Enter your Mac password if prompted
 8. The installer runs — your browser opens automatically
 9. Connect your Salesforce account
 10. Connect your Google Calendar account
+    a. Select your Google account
+    b. On the "Google hasn't verified this app" screen, select "Advanced"
+       -> "Go to Calendar Sync (unsafe)"
+    c. On the "Calendar Sync wants access to your Google Account" screen,
+       select "Continue"
 11. Pick an event color (optional)
 12. Click "Sync Now" to run your first sync
 

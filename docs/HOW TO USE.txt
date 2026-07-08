@@ -49,6 +49,11 @@ IF YOU ARE ON WINDOWS
    -> The app installs itself and opens in your browser automatically
 3. Connect your Salesforce account
 4. Connect your Google Calendar account
+   a. Select your Google account
+   b. On the "Google hasn't verified this app" screen, select "Advanced"
+      -> "Go to Calendar Sync (unsafe)"
+   c. On the "Calendar Sync wants access to your Google Account" screen,
+      select "Continue"
 5. Pick an event color (optional)
 6. Click "Sync Now" to run your first sync
 

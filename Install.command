@@ -3,7 +3,7 @@
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "======================================"
-echo "   CalSync v2 — Installation"
+echo "   CalSync v0.0.7 — Installation"
 echo "======================================"
 echo ""
 

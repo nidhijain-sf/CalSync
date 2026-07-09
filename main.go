@@ -30,6 +30,21 @@ import (
 	"google.golang.org/api/option"
 )
 
+// ---- Timing and config constants (overridden in testmode builds via testmode.go) ----
+
+var errInvalidCredentials = errors.New("INVALID_LOGIN: invalid username, password, or security token")
+
+var (
+	networkWaitDuration   = 5 * time.Minute
+	sfRetryShort          = 5 * time.Minute
+	sfRetryLong           = 1 * time.Hour
+	syncRetryDuration     = 5 * time.Minute
+	schedulerTickDuration = 5 * time.Minute
+	syncInterval          = 24 * time.Hour
+	listenAddr            = ":5001"
+	appBaseURL            = "http://localhost:5001"
+)
+
 // ---- Cross-platform notifications ----
 
 func notify(title, message string) {
@@ -374,6 +389,10 @@ func sfQuery(instanceURL, sessionID, query string) (*SFQueryResult, error) {
 				session.SFSessionID = ""
 				session.SFUserID = ""
 				sessionMu.Unlock()
+				if errors.Is(err, errInvalidCredentials) {
+					notify("CalSync — Action Required", fmt.Sprintf("Salesforce password or security token is incorrect. Open %s to reconnect.", appBaseURL))
+					return nil, fmt.Errorf("Salesforce credentials are invalid — will retry at next sync interval")
+				}
 				return nil, fmt.Errorf("Salesforce session expired and re-login failed — will retry next sync")
 			}
 			// Re-login succeeded — retry the query with the new session
@@ -429,10 +448,14 @@ func sfLogin(username, password, token, domain string) error {
 	if strings.Contains(bodyStr, "<faultstring>") {
 		start := strings.Index(bodyStr, "<faultstring>") + len("<faultstring>")
 		end := strings.Index(bodyStr, "</faultstring>")
+		msg := "Salesforce login failed"
 		if start > 0 && end > start {
-			return fmt.Errorf("%s", bodyStr[start:end])
+			msg = bodyStr[start:end]
 		}
-		return fmt.Errorf("Salesforce login failed")
+		if strings.Contains(msg, "INVALID_LOGIN") || strings.Contains(msg, "LOGIN_MUST_USE_SECURITY_TOKEN") {
+			return errInvalidCredentials
+		}
+		return fmt.Errorf("%s", msg)
 	}
 
 	sessionID := extractXMLTag(bodyStr, "sessionId")
@@ -579,13 +602,21 @@ func needsCatchUp() bool {
 
 // startScheduler runs a catch-up sync on startup if needed, then fires every Monday at 9am.
 func runScheduledSync(label string) {
-	log.Printf("[scheduler] %s — waiting 5 minutes for network", label)
-	time.Sleep(5 * time.Minute)
+	log.Printf("[scheduler] %s — waiting %v for network", label, networkWaitDuration)
+	time.Sleep(networkWaitDuration)
 	// Re-check after the wait — a manual sync may have run in the meantime
-	if last := loadLastSync(); !last.IsZero() && last.After(todayAt9()) {
-		log.Println("[scheduler] sync already completed during network wait, skipping")
-		return
+	if last := loadLastSync(); !last.IsZero() {
+		alreadyDone := syncInterval < 24*time.Hour && time.Since(last) < syncInterval
+		if !alreadyDone && syncInterval >= 24*time.Hour {
+			alreadyDone = last.After(todayAt9())
+		}
+		if alreadyDone {
+			log.Println("[scheduler] sync already completed during network wait, skipping")
+			return
+		}
 	}
+
+	sfFailures := 0
 	for {
 		sessionMu.RLock()
 		connected := session.SFInstanceURL != "" && session.GoogleToken != nil
@@ -595,23 +626,42 @@ func runScheduledSync(label string) {
 			// Retry sfLogin with saved credentials before waiting again.
 			if creds := loadSFCredentials(); creds != nil && session.SFInstanceURL == "" {
 				if err := sfLogin(creds.Username, creds.Password, creds.Token, creds.Domain); err != nil {
-					log.Printf("[scheduler] SF re-login failed: %v — retrying in 5 minutes", err)
-					notify("CalSync — Action Required", "Salesforce login failed. Open http://localhost:5001 to reconnect.")
+					if errors.Is(err, errInvalidCredentials) {
+						log.Printf("[scheduler] SF re-login failed: invalid credentials — will retry at next sync interval")
+						notify("CalSync — Action Required", fmt.Sprintf("Salesforce password or security token is incorrect. Open %s to reconnect.", appBaseURL))
+						return
+					}
+					sfFailures++
+					retryIn := sfRetryShort
+					if sfFailures > 3 {
+						retryIn = sfRetryLong
+					}
+					log.Printf("[scheduler] SF re-login failed (%d): %v — retrying in %v", sfFailures, err, retryIn)
+					switch {
+					case sfFailures <= 3:
+						notify("CalSync — Action Required", fmt.Sprintf("Salesforce login failed. Open %s to reconnect.", appBaseURL))
+					case sfFailures == 4:
+						notify("CalSync — Action Required", fmt.Sprintf("Salesforce login is still failing. Retrying hourly. Open %s to reconnect.", appBaseURL))
+					case sfFailures == 7:
+						notify("CalSync — Action Required", fmt.Sprintf("CalSync has been unable to log in to Salesforce after several attempts. Open %s to reconnect.", appBaseURL))
+					}
+					time.Sleep(retryIn)
 				} else {
 					log.Println("[scheduler] SF re-login succeeded")
+					sfFailures = 0
 					continue
 				}
 			} else {
 				log.Println("[scheduler] accounts not connected, retrying in 5 minutes")
-				notify("CalSync — Action Required", "Accounts not connected. Open http://localhost:5001 to connect.")
+				notify("CalSync — Action Required", fmt.Sprintf("Accounts not connected. Open %s to connect.", appBaseURL))
+				time.Sleep(sfRetryShort)
 			}
-			time.Sleep(5 * time.Minute)
 			continue
 		}
 		if result, err := runSync(); err != nil {
-			log.Printf("[scheduler] sync error: %v — retrying in 5 minutes", err)
+			log.Printf("[scheduler] sync error: %v — retrying in %v", err, syncRetryDuration)
 			notify("CalSync — Sync Failed", fmt.Sprintf("Sync error: %v", err))
-			time.Sleep(5 * time.Minute)
+			time.Sleep(syncRetryDuration)
 		} else {
 			saveLastSync(time.Now())
 			logSyncDetails(result)
@@ -624,23 +674,56 @@ func runScheduledSync(label string) {
 
 func startScheduler() {
 	go func() {
+		notifiedDisconnected := false
 		for {
 			now := time.Now()
-			todayNine := todayAt9()
 			last := loadLastSync()
-			syncedToday := !last.IsZero() && last.After(todayNine)
+			due := !last.IsZero() && now.Sub(last) >= syncInterval
 
-			if now.After(todayNine) && !syncedToday {
-				// Past 9am and haven't synced today — handles both normal schedule
-				// and wake-from-sleep/power-on after missing the 9am window
-				runScheduledSync("sync due")
-			} else if !now.After(todayNine) && now.Minute() < 5 {
-				log.Printf("[scheduler] next scheduled sync at %s", todayNine.Format("Mon 2 Jan 2006 15:04"))
+			syncDue := false
+			if syncInterval < 24*time.Hour {
+				syncDue = due
+			} else {
+				todayNine := todayAt9()
+				syncedToday := !last.IsZero() && last.After(todayNine)
+				if now.After(todayNine) && !syncedToday {
+					syncDue = true
+				} else if !now.After(todayNine) && now.Minute() < 5 {
+					log.Printf("[scheduler] next scheduled sync at %s", todayNine.Format("Mon 2 Jan 2006 15:04"))
+				}
 			}
 
-			time.Sleep(5 * time.Minute)
+			if syncDue {
+				// Check credentials only when a sync is actually due
+				if loadSFCredentials() == nil {
+					sessionMu.RLock()
+					connected := session.SFInstanceURL != ""
+					sessionMu.RUnlock()
+					if !connected {
+						if !notifiedDisconnected {
+							log.Println("[scheduler] Salesforce not connected — waiting for manual reconnect")
+							notify("CalSync — Action Required", fmt.Sprintf("Salesforce is not connected. Open %s to reconnect.", appBaseURL))
+							notifiedDisconnected = true
+						}
+						time.Sleep(schedulerTickDuration)
+						continue
+					}
+				}
+				notifiedDisconnected = false
+				runScheduledSync("sync due")
+			}
+
+			time.Sleep(schedulerTickDuration)
 		}
 	}()
+}
+
+func normalizeDateTime(s string) string {
+	t := parseDateTime(s)
+	if t.IsZero() {
+		return s
+	}
+	return t.UTC().Format(time.RFC3339)
 }
 
 func parseDateTime(s string) time.Time {
@@ -756,6 +839,42 @@ func runSync() (*SyncResult, error) {
 	syncMap := loadSyncMap()
 	currentSFIDs := map[string]bool{}
 
+	// Build a lookup of existing Google Calendar events to avoid duplicates on first sync
+	existingGCalEvents := map[string]string{} // "subject|startDateTime" -> gID
+	pageToken := ""
+	for {
+		call := svc.Events.List("primary").
+			TimeMin(today).
+			SingleEvents(true).
+			MaxResults(250)
+		if pageToken != "" {
+			call = call.PageToken(pageToken)
+		}
+		gcalList, gcalErr := call.Do()
+		if gcalErr != nil {
+			log.Printf("[sync] could not fetch existing Google Calendar events for dedup: %v", gcalErr)
+			break
+		}
+		for _, e := range gcalList.Items {
+			if e.Status == "cancelled" {
+				continue
+			}
+			start := ""
+			if e.Start != nil {
+				start = e.Start.DateTime
+				if start == "" {
+					start = e.Start.Date
+				}
+			}
+			key := e.Summary + "|" + normalizeDateTime(start)
+			existingGCalEvents[key] = e.Id
+		}
+		if gcalList.NextPageToken == "" {
+			break
+		}
+		pageToken = gcalList.NextPageToken
+	}
+
 	for _, event := range sfResult.Records {
 		if event.StartDateTime == "" || event.EndDateTime == "" {
 			result.Skipped++
@@ -835,19 +954,43 @@ func runSync() (*SyncResult, error) {
 				result.Details = append(result.Details, SyncDetail{Subject: subject, Status: "skipped"})
 			}
 		} else {
-			var created *googlecalendar.Event
-			err := withBackoff(func() error {
-				var e error
-				created, e = svc.Events.Insert("primary", gEvent).Do()
-				return e
-			})
-			if err != nil {
-				result.Errors++
-				result.Details = append(result.Details, SyncDetail{Subject: subject, Status: "error: " + err.Error()})
+			// Check if an identical event already exists in Google Calendar (e.g. from a previous install)
+			dedupKey := subject + "|" + normalizeDateTime(event.StartDateTime)
+			if existingGID, found := existingGCalEvents[dedupKey]; found {
+				syncMap[event.ID] = existingGID
+				// Fetch the existing event to check if it needs updating (e.g. color change)
+				existing, fetchErr := svc.Events.Get("primary", existingGID).Do()
+				if fetchErr == nil && !eventsMatch(existing, gEvent) {
+					err := withBackoff(func() error {
+						_, e := svc.Events.Update("primary", existingGID, gEvent).Do()
+						return e
+					})
+					if err != nil {
+						result.Errors++
+						result.Details = append(result.Details, SyncDetail{Subject: subject, Status: "error: " + err.Error()})
+					} else {
+						result.Synced++
+						result.Details = append(result.Details, SyncDetail{Subject: subject, Status: "updated"})
+					}
+				} else {
+					result.Skipped++
+					result.Details = append(result.Details, SyncDetail{Subject: subject, Status: "skipped"})
+				}
 			} else {
-				syncMap[event.ID] = created.Id
-				result.Synced++
-				result.Details = append(result.Details, SyncDetail{Subject: subject, Status: "created"})
+				var created *googlecalendar.Event
+				err := withBackoff(func() error {
+					var e error
+					created, e = svc.Events.Insert("primary", gEvent).Do()
+					return e
+				})
+				if err != nil {
+					result.Errors++
+					result.Details = append(result.Details, SyncDetail{Subject: subject, Status: "error: " + err.Error()})
+				} else {
+					syncMap[event.ID] = created.Id
+					result.Synced++
+					result.Details = append(result.Details, SyncDetail{Subject: subject, Status: "created"})
+				}
 			}
 		}
 	}
@@ -1153,10 +1296,10 @@ func main() {
 	http.HandleFunc("/disconnect/google", handleDisconnectGoogle)
 	http.HandleFunc("/logo", handleLogo)
 
-	fmt.Println("Starting CalSync v2 — Salesforce → Google Calendar Sync")
-	fmt.Println("Open your browser at: http://localhost:5001")
+	fmt.Println("Starting CalSync v0.0.8 — Salesforce → Google Calendar Sync")
+	fmt.Printf("Open your browser at: %s\n", appBaseURL)
 
-	if err := http.ListenAndServe(":5001", nil); err != nil {
+	if err := http.ListenAndServe(listenAddr, nil); err != nil {
 		log.Fatal(err)
 	}
 }

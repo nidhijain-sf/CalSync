@@ -686,7 +686,7 @@ func startScheduler() {
 			} else {
 				todayNine := todayAt9()
 				syncedToday := !last.IsZero() && last.After(todayNine)
-				if now.After(todayNine) && !syncedToday {
+				if !last.IsZero() && now.After(todayNine) && !syncedToday {
 					syncDue = true
 				} else if !now.After(todayNine) && now.Minute() < 5 {
 					log.Printf("[scheduler] next scheduled sync at %s", todayNine.Format("Mon 2 Jan 2006 15:04"))

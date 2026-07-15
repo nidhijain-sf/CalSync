@@ -1312,7 +1312,7 @@ func main() {
 	http.HandleFunc("/disconnect/google", handleDisconnectGoogle)
 	http.HandleFunc("/logo", handleLogo)
 
-	fmt.Println("Starting CalSync v0.0.8 — Salesforce → Google Calendar Sync")
+	fmt.Println("Starting CalSync v0.0.9 — Salesforce → Google Calendar Sync")
 	fmt.Printf("Open your browser at: %s\n", appBaseURL)
 
 	if err := http.ListenAndServe(listenAddr, nil); err != nil {

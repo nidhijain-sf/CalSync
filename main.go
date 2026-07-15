@@ -995,9 +995,25 @@ func runSync() (*SyncResult, error) {
 		}
 	}
 
-	// Delete events removed from Salesforce
+	// Delete events removed from Salesforce (only future events — never delete past events)
 	for sfID, gID := range syncMap {
 		if !currentSFIDs[sfID] {
+			existing, fetchErr := svc.Events.Get("primary", gID).Do()
+			deleteSubject := sfID
+			if fetchErr == nil && existing != nil {
+				if existing.Summary != "" {
+					deleteSubject = existing.Summary
+				}
+				if existing.Start != nil {
+					start := parseDateTime(existing.Start.DateTime)
+					if start.IsZero() {
+						start = parseDateTime(existing.Start.Date)
+					}
+					if !start.IsZero() && start.Before(now) {
+						continue
+					}
+				}
+			}
 			time.Sleep(rateLimitDelay)
 			err := withBackoff(func() error {
 				return svc.Events.Delete("primary", gID).Do()
@@ -1007,15 +1023,15 @@ func runSync() (*SyncResult, error) {
 				if errors.As(err, &apiErr) && (apiErr.Code == 404 || apiErr.Code == 410) {
 					delete(syncMap, sfID)
 					result.Deleted++
-					result.Details = append(result.Details, SyncDetail{Subject: sfID, Status: "deleted"})
+					result.Details = append(result.Details, SyncDetail{Subject: deleteSubject, Status: "deleted"})
 				} else {
 					result.Errors++
-					result.Details = append(result.Details, SyncDetail{Subject: sfID, Status: "delete error: " + err.Error()})
+					result.Details = append(result.Details, SyncDetail{Subject: deleteSubject, Status: "delete error: " + err.Error()})
 				}
 			} else {
 				delete(syncMap, sfID)
 				result.Deleted++
-				result.Details = append(result.Details, SyncDetail{Subject: sfID, Status: "deleted"})
+				result.Details = append(result.Details, SyncDetail{Subject: deleteSubject, Status: "deleted"})
 			}
 		}
 	}
